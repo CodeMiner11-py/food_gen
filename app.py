@@ -146,24 +146,32 @@ def get_image():
         return jsonify({"error": "Missing user_id or title"}), 400
 
     try:
+        # Fetch the image path from the database
         conn = sqlite3.connect(DB_PATH)
         c = conn.cursor()
         c.execute('''
             SELECT image_path FROM recipes WHERE user_id = ? AND title = ?
-        ''', (user_id, title.replace("_", " ")))
+        ''', (user_id, title.replace("_", " ")))  # Replace underscores with spaces
         result = c.fetchone()
         conn.close()
 
         if result is None:
-            return jsonify({"error": "Image not found"}), 404
+            return jsonify({"error": f"Image not found for {title}"}), 404
 
         image_path = result[0]
+        print(f"Image path from DB: {image_path}")
+
+        # Ensure the file exists
         if not os.path.exists(image_path):
+            print(f"File does not exist at: {image_path}")
             return jsonify({"error": "File missing on disk"}), 404
 
+        # Serve the image
+        print(f"Sending image from path: {image_path}")
         return send_file(image_path, mimetype='image/png')
 
     except Exception as e:
+        print(f"Error: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":

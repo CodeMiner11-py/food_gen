@@ -49,8 +49,6 @@ def get_response(prompt):
 image_generation_model_name = "gemini-2.0-flash-exp-image-generation"
 image_generation_model = genai.GenerativeModel(model_name=image_generation_model_name)
 
-
-# Configure Replicate API token
 def get_image_pollinations(prompt, save_path="generated_images.png"):
     """Generates an image from a text prompt using Pollinations AI."""
     prompt += str(uuid.uuid4())  # Ensure unique prompts to bypass caching
@@ -59,15 +57,23 @@ def get_image_pollinations(prompt, save_path="generated_images.png"):
     try:
         response = requests.get(url)
         response.raise_for_status()
+
+        # Check if it's an image
+        if "image" not in response.headers["Content-Type"]:
+            print(f"Error: The URL did not return an image, but a {response.headers['Content-Type']} file.")
+            return None
+
         image_save_path = save_path
         os.makedirs(os.path.dirname(image_save_path), exist_ok=True)
         with open(image_save_path, 'wb') as f:
             f.write(response.content)
-        print(f"Generated: {image_save_path}")
+
+        print(f"Image saved at: {image_save_path}")  # Log image save path
         return image_save_path
     except requests.exceptions.RequestException as e:
         print(f"Request failed: {e}")
         return None
+
 
 
 def crop_bottom(image_path, pixels_to_crop=60):
