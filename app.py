@@ -70,41 +70,35 @@ def create_recipe():
         return jsonify({"error": "Missing user_id"}), 400
 
     try:
-        # Check if recipe title already exists for the user
-        title = data.get('title')
-        conn = sqlite3.connect(DB_PATH)
-        c = conn.cursor()
-        c.execute('''
-            SELECT COUNT(*) FROM recipes WHERE user_id = ? AND title = ?
-        ''', (user_id, title))
-        count = c.fetchone()[0]
-        conn.close()
-
-        if count > 0:
-            return jsonify({"error": "Duplicate recipe title, this already exists."}), 400
-
-        # Generate recipe and save it
+        # Generate recipe using Gemini
         result = get_recipe(ingredients, budget, serves, time, meal_type)
         if result == ["0", "0", "0", "0", "0"]:
             return jsonify({"error": "Could not generate recipe"}), 400
 
-        # Unpack the result
-        title, desc, ingredients, procedures, prompt, image_path = result
+        # Unpack values
+        title, desc, ing, procedures, prompt, image_path = result
 
-        # Save to DB
+        # Check for duplicate title
         conn = sqlite3.connect(DB_PATH)
         c = conn.cursor()
+        c.execute('SELECT COUNT(*) FROM recipes WHERE user_id = ? AND title = ?', (user_id, title))
+        count = c.fetchone()[0]
+        if count > 0:
+            conn.close()
+            return jsonify({"error": f"Duplicate recipe title: '{title}' already exists."}), 400
+
+        # Save recipe
         c.execute('''
             INSERT INTO recipes (user_id, title, description, ingredients, procedures, image_prompt, image_path)
             VALUES (?, ?, ?, ?, ?, ?, ?)
-        ''', (user_id, title, desc, ingredients, procedures, prompt, image_path))
+        ''', (user_id, title, desc, ing, procedures, prompt, image_path))
         conn.commit()
         conn.close()
 
         return jsonify({
             "title": title,
             "description": desc,
-            "ingredients": ingredients,
+            "ingredients": ing,
             "procedures": procedures,
             "image_prompt": prompt,
             "image_path": image_path
