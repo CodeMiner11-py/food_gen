@@ -1,12 +1,12 @@
-import os
 import sqlite3
 
 from flask import Flask, request, jsonify, send_file
 
-from recipe_generator import get_recipe
+from recipe_generator import *
 
 app = Flask(__name__)
 DB_PATH = "recipes.db"
+
 
 # Initialize DB + tables
 def init_db():
@@ -31,7 +31,9 @@ def init_db():
     conn.commit()
     conn.close()
 
+
 init_db()
+
 
 # Manual ID generator
 def get_next_user_id():
@@ -44,6 +46,52 @@ def get_next_user_id():
     conn.close()
     return next_id
 
+
+from flask import request, jsonify
+from werkzeug.utils import secure_filename
+import os
+
+@app.route('/scan_recipe', methods=['POST'])
+def scan_recipe():
+    if 'image' not in request.files:
+        return jsonify({"error": "No image file provided"}), 400
+
+    image_file = request.files['image']
+
+    if image_file.filename == '':
+        return jsonify({"error": "No selected file"}), 400
+
+    # Save the uploaded image
+    filename = secure_filename(image_file.filename)
+    save_folder = 'images'
+    os.makedirs(save_folder, exist_ok=True)
+    image_path = os.path.join(save_folder, filename)
+    image_file.save(image_path)
+
+    print(f"Image saved at: {image_path}")
+
+    # Call the existing Gemini-powered function to process the image
+    try:
+        gemini_response = get_ingredients_from_image(image_path)
+
+        if gemini_response is None or gemini_response.strip() == "":
+            return jsonify({"error": "Failed to generate recipe from image"}), 500
+
+        parts = gemini_response.strip().split(";")
+        if len(parts) < 4 or parts[0] == "0":
+            return jsonify({"error": "Gemini could not create a recipe from this image"}), 400
+
+        return jsonify({
+            "title": parts[0].strip(),
+            "description": parts[1].strip(),
+            "ingredients": parts[2].split(","),
+            "procedures": parts[3].split(",")
+        })
+
+    except Exception as e:
+        return jsonify({"error": f"Internal error: {str(e)}"}), 500
+
+
 # Create new user with manual ID
 @app.route('/get_id', methods=['POST'])
 def get_id():
@@ -54,6 +102,7 @@ def get_id():
     conn.commit()
     conn.close()
     return jsonify({"user_id": new_id})
+
 
 # Create and store recipe
 @app.route('/create_recipe', methods=['POST'])
@@ -137,6 +186,7 @@ def get_recipes():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+
 @app.route('/get_image', methods=['GET'])
 def get_image():
     user_id = request.args.get('user_id')
@@ -173,6 +223,7 @@ def get_image():
     except Exception as e:
         print(f"Error: {str(e)}")
         return jsonify({"error": str(e)}), 500
+
 
 if __name__ == "__main__":
     app.run(debug=True)
