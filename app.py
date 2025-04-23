@@ -194,6 +194,9 @@ def get_image():
     user_id = request.args.get('user_id')
     title = request.args.get('title')
 
+    # Logging input parameters
+    print(f"Request for image with user_id: {user_id}, title: {title}")
+
     if not user_id or not title:
         return jsonify({"error": "Missing user_id or title"}), 400
 
@@ -206,6 +209,9 @@ def get_image():
         ''', (user_id, title.replace("_", " ")))  # Replace underscores with spaces
         result = c.fetchone()
         conn.close()
+
+        # Log the result of the query
+        print(f"Database result: {result}")
 
         if result is None:
             return jsonify({"error": f"Image not found for {title}"}), 404
