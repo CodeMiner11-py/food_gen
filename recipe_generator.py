@@ -126,8 +126,8 @@ You will also be given the user's budget for how many extra ingredients they can
 Answer in five parts, separated by semicolons.
 The first part is a title for the recipe. Vary this each time, even for the same dish.
 The second part is a friendly description of the dish, along with the time it takes and how many it serves.
-The third part is the ingredients needed, separated by comma symbols (,) (no spaces between comma symbols, but put spaces in the ingredient names as usual). Do not include ingredient numbers. Extra ingredients should fit within the budget. This should not include the ingredients at home. Make sure you use measurements.
-The fourth part is the procedures to make the dish, separated by comma symbols (,) (no spaces between comma symbols, but put spaces in procedures as normal). Do not include procedure numbers.
+The third part is the ingredients needed, separated by periods (.) (no spaces between periods, but put spaces in the ingredient names as usual). Do not include ingredient numbers. Extra ingredients should fit within the budget. This should not include the ingredients at home. Make sure you use measurements.
+The fourth part is the procedures to make the dish, separated by periods (.) (no spaces between periods, but put spaces in procedures as normal). Do not include procedure numbers.
 The fifth part is a description of what the final dish looks like (including its name) that you would give to an image generator to generate an image. Make sure it's short and to the point, and it's a generator that does not know many different types of foods, so explain the food while keeping it short. For example, for a ketchup-mayonaisse dip, tell it to create an image of a cup with orange dip in it.
 Format: title;description;ingredients;procedures;image.
 If you cannot create a meal following these criteria, simply return: 0;0;0;0;0.
@@ -178,8 +178,8 @@ def get_ingredients_from_image(image_path):
 Answer in five parts, separated by semicolons.
 The first part is a title of the recipe.
 The second part is a friendly description of the dish, along with the time it takes and how many it serves.
-The third part is the ingredients needed, separated by comma symbols (,) (no spaces between comma symbols). Do not include ingredient numbers. Make sure you use measurements. DO NOT INCLUDE the ingredients already at home.
-The fourth part is the procedures to make the dish, separated by comma symbols (,) (no spaces between comma symbols). Do not include procedure numbers.
+The third part is the ingredients needed, separated by period symbols (.) (no spaces between period symbols). Do not include ingredient numbers. Make sure you use measurements. DO NOT INCLUDE the ingredients already at home.
+The fourth part is the procedures to make the dish, separated by period symbols (.) (no spaces between period symbols). Do not include procedure numbers.
 The fifth part is a 0. Just enter a 0.
 Format: title;description;ingredients;procedures;0.
 If you cannot create a meal following these criteria, simply return: 0;0;0;0;0.
