@@ -1,0 +1,105 @@
+body { font-family: Thingfont; }
+
+@font-face {
+    font-family: Thingfont;
+    src: url("thingfont.ttf");
+}
+
+#navigation ul{
+    list-style-type: none;
+    display: flex;
+    justify-content: center;
+    padding: 0;
+    margin: 0 auto;
+}
+
+#navigation ul li{
+    padding-left: 15px;
+    padding-right: 15px;
+}
+
+#navigation ul li a{
+    text-decoration: none;
+    color: black;
+}
+
+.modern-form {
+    max-width: 500px;
+    margin: 20px auto;
+    padding: 20px;
+    background: #f4f4f4;
+    border-radius: 12px;
+}
+
+.modern-form label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: bold;
+    color: #333;
+}
+
+.modern-form input,
+.modern-form textarea,
+.modern-form select {
+    font-family: inherit !important;
+}
+
+.modern-form select {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 20px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 14px;
+    background-color: white;
+    box-sizing: border-box;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+}
+
+.modern-form input[type="number"] {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 20px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 14px;
+    box-sizing: border-box;
+}
+
+.modern-form input[type="text"],
+.modern-form textarea {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 20px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 14px;
+    box-sizing: border-box;
+    resize: vertical;
+}
+
+.modern-form button {
+    background-color: #4CAF50;
+    color: white;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 16px;
+    font-family: inherit; /* Ensures button text matches the body font */
+    transition: background-color 0.3s ease;
+}
+
+.modern-form button:hover {
+    background-color: #45a049;
+}
+
+.divider{
+    height: 1px;
+    width: 100%;
+    background-color: black;
+    margin-top: 15px;
+    margin-bottom: 15px;
+}
