@@ -131,14 +131,16 @@ def create_recipe():
         # Unpack values
         title, desc, ing, procedures, prompt, image_path = result
 
+        count = 711
         # Check for duplicate title
-        conn = sqlite3.connect(DB_PATH)
-        c = conn.cursor()
-        c.execute('SELECT COUNT(*) FROM recipes WHERE user_id = ? AND title = ?', (user_id, title))
-        count = c.fetchone()[0]
-        if count > 0:
-            conn.close()
-            return jsonify({"error": f"Duplicate recipe title: '{title}' already exists."}), 400
+        while count > 0:
+            conn = sqlite3.connect(DB_PATH)
+            c = conn.cursor()
+            c.execute('SELECT COUNT(*) FROM recipes WHERE user_id = ? AND title = ?', (user_id, title))
+            count = c.fetchone()[0]
+            if count > 0:
+                conn.close()
+                title = newName(title)
 
         # Save recipe
         c.execute('''

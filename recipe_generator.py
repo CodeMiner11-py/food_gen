@@ -195,6 +195,8 @@ The type of meal requested is a dish.
         print(f"Gemini Vision error: {e}")
         return None
 
+def newName(oldName):
+    return get_response("Please generate a new, different-sounding title for this recipe. Give your response as just the title please. The old name is: "+oldName)
 
 def get_shopping_list(need_to_buy):
     prompt = """What is the price in US dollars of the following ingredients combined? Estimate the prices for each ingredient. Measurements are given. Ingredients are separated by the comm a symbol (,). Please give your best estimate considering typical grocery prices, without a description and just a value please.
