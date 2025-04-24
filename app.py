@@ -93,17 +93,19 @@ def scan_recipe():
     except Exception as e:
         return jsonify({"error": f"Internal error: {str(e)}"}), 500
 
-
-# Create new user with manual ID
-@app.route('/get_id', methods=['POST'])
-def get_id():
+def idfetcher():
     new_id = get_next_user_id()
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
     c.execute('INSERT INTO users (id) VALUES (?)', (new_id,))
     conn.commit()
     conn.close()
-    return jsonify({"user_id": new_id})
+    return new_id
+
+# Create new user with manual ID
+@app.route('/get_id', methods=['GET'])
+def get_id():
+    return jsonify({"user_id": idfetcher()})
 
 
 # Create and store recipe
