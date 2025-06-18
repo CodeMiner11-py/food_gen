@@ -16,7 +16,7 @@ def init_db():
     c = conn.cursor()
     c.execute('''
         CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY
+            id TEXT PRIMARY KEY
         )
     ''')
     c.execute('''
