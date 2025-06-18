@@ -52,10 +52,13 @@ from werkzeug.utils import secure_filename
 import os
 
 @app.route('/get_facts', methods=['POST'])
-def get_nutrition_facts_from_user_recipe():
-    user_recipe = request.form['recipe_text']
-    ai_result = get_nutrition_facts(user_recipe)
-    return jsonify({"facts": ai_result})
+def get_facts():
+    data = request.get_json(force=True)
+    if not data or 'recipe_text' not in data:
+        return jsonify({"error": "Invalid input"}), 400
+
+    recipe = data['recipe_text']
+    return jsonify({"message": "Received", "recipe": recipe})
 
 @app.route('/scan_recipe', methods=['POST'])
 def scan_recipe():
