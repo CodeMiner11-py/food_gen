@@ -73,6 +73,8 @@ def get_facts():
         return jsonify({"error": "Unexpected facts format"}), 500
 
     facts_dict = dict(zip(keys, values))
+    facts_dict["calories"] = facts_dict["calories"].strip()
+    facts_dict["totalfat"] = facts_dict["totalfat"].strip()
 
     return jsonify({"facts": facts_dict})
 
