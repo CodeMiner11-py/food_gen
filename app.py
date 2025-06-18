@@ -58,7 +58,7 @@ def get_facts():
         return jsonify({"error": "Invalid input"}), 400
 
     recipe = data['recipe_text']
-    return jsonify({"message": "Received", "recipe": recipe})
+    return jsonify({"facts": get_nutrition_facts(recipe)})
 
 @app.route('/scan_recipe', methods=['POST'])
 def scan_recipe():
