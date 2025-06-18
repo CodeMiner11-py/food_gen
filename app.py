@@ -1,3 +1,4 @@
+import uuid
 import sqlite3
 
 from flask import Flask, request, jsonify, send_file
@@ -117,7 +118,7 @@ def scan_recipe():
         return jsonify({"error": f"Internal error: {str(e)}"}), 500
 
 def idfetcher():
-    new_id = get_next_user_id()
+    new_id = str(uuid.uuid4())  # generate UUID string
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
     c.execute('INSERT INTO users (id) VALUES (?)', (new_id,))
