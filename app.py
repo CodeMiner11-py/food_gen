@@ -10,7 +10,6 @@ CORS(app)
 DB_PATH = "recipes.db"
 
 
-# Initialize DB + tables
 def init_db():
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
@@ -37,7 +36,6 @@ def init_db():
 init_db()
 
 
-# Manual ID generator
 def get_next_user_id():
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
@@ -53,6 +51,12 @@ from flask import request, jsonify
 from werkzeug.utils import secure_filename
 import os
 
+@app.route('/get_facts', methods=['POST'])
+def get_nutrition_facts_from_user_recipe():
+    user_recipe = request.form['recipe_text']
+    ai_result = get_nutrition_facts(user_recipe)
+    return jsonify({"facts": ai_result})
+
 @app.route('/scan_recipe', methods=['POST'])
 def scan_recipe():
     if 'image' not in request.files:
@@ -63,7 +67,6 @@ def scan_recipe():
     if image_file.filename == '':
         return jsonify({"error": "No selected file"}), 400
 
-    # Save the uploaded image
     filename = secure_filename(image_file.filename)
     save_folder = 'images'
     os.makedirs(save_folder, exist_ok=True)
@@ -72,7 +75,6 @@ def scan_recipe():
 
     print(f"Image saved at: {image_path}")
 
-    # Call the existing Gemini-powered function to process the image
     try:
         gemini_response = get_ingredients_from_image(image_path)
 
@@ -102,13 +104,11 @@ def idfetcher():
     conn.close()
     return new_id
 
-# Create new user with manual ID
 @app.route('/get_id', methods=['GET'])
 def get_id():
     return jsonify({"user_id": idfetcher()})
 
 
-# Create and store recipe
 @app.route('/create_recipe', methods=['POST'])
 def create_recipe():
     data = request.json
@@ -123,16 +123,13 @@ def create_recipe():
         return jsonify({"error": "Missing user_id"}), 400
 
     try:
-        # Generate recipe using Gemini
         result = get_recipe(ingredients, budget, serves, time, meal_type)
         if result == ["0", "0", "0", "0", "0"]:
             return jsonify({"error": "Could not generate recipe"}), 400
 
-        # Unpack values
         title, desc, ing, procedures, prompt, image_path = result
 
         count = 711
-        # Check for duplicate title
         while count > 0:
             conn = sqlite3.connect(DB_PATH)
             c = conn.cursor()
@@ -142,7 +139,6 @@ def create_recipe():
                 conn.close()
                 title = newName(title)
 
-        # Save recipe
         c.execute('''
             INSERT INTO recipes (user_id, title, description, ingredients, procedures, image_prompt, image_path)
             VALUES (?, ?, ?, ?, ?, ?, ?)
@@ -163,7 +159,6 @@ def create_recipe():
         return jsonify({"error": str(e)}), 500
 
 
-# Fetch recipes for a user
 @app.route('/get_recipes', methods=['GET'])
 def get_recipes():
     user_id = request.args.get('user_id')
@@ -202,23 +197,20 @@ def get_image():
         return jsonify({"success": True})
 
     else:
-        # Logging input parameters
         print(f"Request for image with user_id: {user_id}, title: {title}")
 
         if not user_id or not title:
             return jsonify({"error": "Missing user_id or title"}), 400
 
         try:
-            # Fetch the image path from the database
             conn = sqlite3.connect(DB_PATH)
             c = conn.cursor()
             c.execute('''
                 SELECT image_path FROM recipes WHERE user_id = ? AND title = ?
-            ''', (user_id, title.replace("_", " ")))  # Replace underscores with spaces
+            ''', (user_id, title.replace("_", " ")))
             result = c.fetchone()
             conn.close()
 
-            # Log the result of the query
             print(f"Database result: {result}")
 
             if result is None:
@@ -227,12 +219,10 @@ def get_image():
             image_path = result[0]
             print(f"Image path from DB: {image_path}")
 
-            # Ensure the file exists
             if not os.path.exists(image_path):
                 print(f"File does not exist at: {image_path}")
                 return jsonify({"error": "File missing on disk"}), 404
 
-            # Serve the image
             print(f"Sending image from path: {image_path}")
             return send_file(image_path, mimetype='image/png')
 

@@ -163,6 +163,30 @@ def get_directories(path):
     with os.scandir(path) as entries:
         return [entry.name for entry in entries if entry.is_dir()]
 
+def get_nutrition_facts(recipe_text):
+    prompt = f"""
+Your job is to analyze the recipe above and estimate the nutrition facts of it combined.
+Please separate your response into the following parts. Use semicolons (;) to separate your response.
+1: Total Fat
+2: Saturated Fat
+3: Trans Fat
+4: Cholesterol
+5: Sodium
+6: Total Carbs
+7: Dietary Fiber
+8: Total Sugars
+9: Added Sugars
+10: Protein
+Your response should be formatted as such:
+totalfat;saturatedfat;transfat;cholesterol;sodium;totalcarbs;dietaryfiber;totalsugar;addedsugar;protein
+PLEASE TRY YOUR BEST and align these nutrition facts with the current nutrition of these ingredients in the US.
+THIS INFORMATION is vital for our code.
+Even if you can't give a complete answer, please try your best.
+The recipe is below, and is structured into title;description;ingredients;procedure;random. Ignore the last 'random' part:
+{recipe_text}
+"""
+    return get_response(prompt)
+
 
 def get_ingredients_from_image(image_path):
     """
