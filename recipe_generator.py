@@ -182,6 +182,8 @@ totalfat;saturatedfat;transfat;cholesterol;sodium;totalcarbs;dietaryfiber;totals
 PLEASE TRY YOUR BEST and align these nutrition facts with the current nutrition of these ingredients in the US.
 THIS INFORMATION is vital for our code.
 Even if you can't give a complete answer, please try your best.
+PLEASE DO NOT SPEAK ANY TEXT OTHER THAN THE FORMATTED NUTRITION RESPONSE. THIS WILL BREAK THE CODE.
+DO NOT INCLUDE SOMETHING LIKE 5-10 MG. JUST SAY 7.5 MG AS AN AVERAGE. DO NOT SPEAK RANGES.
 The recipe is below, and is structured into title;description;ingredients;procedure;random. Ignore the last 'random' part:
 {recipe_text}
 """
