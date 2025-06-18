@@ -14,14 +14,19 @@ DB_PATH = "recipes.db"
 def init_db():
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
+
+    # Drop users table to fix schema
+    c.execute('DROP TABLE IF EXISTS users')
+
     c.execute('''
-        CREATE TABLE IF NOT EXISTS users (
+        CREATE TABLE users (
             id TEXT PRIMARY KEY
         )
     ''')
+
     c.execute('''
         CREATE TABLE IF NOT EXISTS recipes (
-            user_id INTEGER,
+            user_id TEXT,
             title TEXT,
             description TEXT,
             ingredients TEXT,
@@ -30,6 +35,7 @@ def init_db():
             image_path TEXT
         )
     ''')
+
     conn.commit()
     conn.close()
 
