@@ -177,8 +177,9 @@ Please separate your response into the following parts. Use semicolons (;) to se
 8: Total Sugars
 9: Added Sugars
 10: Protein
+11: Total Calories
 Your response should be formatted as such:
-totalfat;saturatedfat;transfat;cholesterol;sodium;totalcarbs;dietaryfiber;totalsugar;addedsugar;protein
+totalfat;saturatedfat;transfat;cholesterol;sodium;totalcarbs;dietaryfiber;totalsugar;addedsugar;protein;calories
 PLEASE TRY YOUR BEST and align these nutrition facts with the current nutrition of these ingredients in the US.
 THIS INFORMATION is vital for our code.
 Even if you can't give a complete answer, please try your best.

@@ -58,7 +58,23 @@ def get_facts():
         return jsonify({"error": "Invalid input"}), 400
 
     recipe = data['recipe_text']
-    return jsonify({"facts": get_nutrition_facts(recipe)})
+    facts_string = get_nutrition_facts(recipe)
+
+    keys = [
+        "totalfat", "saturatedfat", "transfat", "cholesterol", "sodium",
+        "totalcarbs", "dietaryfiber", "totalsugar", "addedsugar", "protein", "calories"
+    ]
+
+    if not facts_string:
+        return jsonify({"error": "No facts returned"}), 500
+
+    values = facts_string.split(";")
+    if len(values) != len(keys):
+        return jsonify({"error": "Unexpected facts format"}), 500
+
+    facts_dict = dict(zip(keys, values))
+
+    return jsonify({"facts": facts_dict})
 
 @app.route('/scan_recipe', methods=['POST'])
 def scan_recipe():
