@@ -154,8 +154,8 @@ def pollinate():
     if crop_result is None:
         return jsonify({"error": "Image cropping failed"}), 500
 
-    return send_file(image_path, mimetype='image/png')
-
+# Instead of returning the image directly, return the filename
+    return jsonify({"filename": os.path.basename(image_path)})
 
 from flask import send_from_directory
 
