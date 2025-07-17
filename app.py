@@ -154,8 +154,7 @@ def pollinate():
     if crop_result is None:
         return jsonify({"error": "Image cropping failed"}), 500
 
-    image_url = f"/{image_path}"
-    return jsonify({"image_url": image_url})
+    return send_file(image_path, mimetype='image/png')
 
 
 @app.route('/get_id', methods=['GET'])
