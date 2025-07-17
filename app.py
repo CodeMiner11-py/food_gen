@@ -157,6 +157,24 @@ def pollinate():
     return send_file(image_path, mimetype='image/png')
 
 
+from flask import send_from_directory
+
+
+@app.route('/image_return', methods=['GET'])
+def image_return():
+    filename = request.args.get('filename')
+    if not filename:
+        return jsonify({"error": "Missing filename parameter"}), 400
+
+    images_dir = os.path.join(os.getcwd(), 'images')
+    file_path = os.path.join(images_dir, filename)
+
+    if not os.path.isfile(file_path):
+        return jsonify({"error": "File not found"}), 404
+
+    return send_from_directory(images_dir, filename)
+
+
 @app.route('/get_id', methods=['GET'])
 def get_id():
     return jsonify({"user_id": idfetcher()})
