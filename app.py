@@ -58,6 +58,7 @@ from flask import request, jsonify
 from werkzeug.utils import secure_filename
 import os
 
+
 @app.route('/get_facts', methods=['POST'])
 def get_facts():
     data = request.get_json(force=True)
@@ -84,6 +85,7 @@ def get_facts():
     facts_dict["totalfat"] = facts_dict["totalfat"].strip()
 
     return jsonify({"facts": facts_dict})
+
 
 @app.route('/scan_recipe', methods=['POST'])
 def scan_recipe():
@@ -123,6 +125,7 @@ def scan_recipe():
     except Exception as e:
         return jsonify({"error": f"Internal error: {str(e)}"}), 500
 
+
 def idfetcher():
     new_id = str(uuid.uuid4())  # generate UUID string
     conn = sqlite3.connect(DB_PATH)
@@ -131,6 +134,29 @@ def idfetcher():
     conn.commit()
     conn.close()
     return new_id
+
+
+@app.route('/pollinate', methods=['POST'])
+def pollinate():
+    data = request.get_json(force=True)
+    if not data or 'prompt' not in data:
+        return jsonify({"error": "Missing prompt"}), 400
+
+    prompt = data['prompt']
+    image_filename = f"images/{uuid.uuid4()}.png"
+    os.makedirs(os.path.dirname(image_filename), exist_ok=True)
+
+    image_path = get_image_pollinations(prompt, image_filename)
+    if not image_path:
+        return jsonify({"error": "Image generation failed"}), 500
+
+    crop_result = crop_bottom(image_path, 60)
+    if crop_result is None:
+        return jsonify({"error": "Image cropping failed"}), 500
+
+    image_url = f"/{image_path}"
+    return jsonify({"image_url": image_url})
+
 
 @app.route('/get_id', methods=['GET'])
 def get_id():
