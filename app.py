@@ -264,7 +264,7 @@ def get_image():
     # GET IMAGE FOR RECIPE
     user_id = request.args.get('user_id')
     title = request.args.get('title')
-    title = title.replace("\n", "").replace("%0A", "").replace("_", "")
+    title = title.replace("\n", "").replace("%0A", "").replace("_", " ")
 
     if user_id == "1" and title == "Simple_Tomato_&_Cheese_Sandwich":
         return jsonify({"success": True})
