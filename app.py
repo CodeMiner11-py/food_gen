@@ -229,7 +229,6 @@ def create_recipe():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-
 @app.route('/get_recipes', methods=['GET'])
 def get_recipes():
     user_id = request.args.get('user_id')
@@ -239,24 +238,31 @@ def get_recipes():
     try:
         conn = sqlite3.connect(DB_PATH)
         c = conn.cursor()
-        c.execute(
-            'SELECT title, description, ingredients, procedures, image_prompt, image_path FROM recipes WHERE user_id = ?',
-            (user_id,))
+        c.execute('''
+            SELECT title, description, ingredients, procedures, image_prompt, image_path
+            FROM recipes
+            WHERE user_id = ?
+        ''', (user_id,))
         recipes = c.fetchall()
+        conn.close()
 
         recipe_list = [
             {
                 "title": r[0],
                 "description": r[1],
-                "ingredients": r[2],
-                "procedures": r[3],
+                "ingredients": r[2] if isinstance(r[2], str) else "",
+                "procedures": r[3] if isinstance(r[3], str) else "",
                 "image_prompt": r[4],
                 "image_path": r[5]
             } for r in recipes
         ]
+
         return jsonify({"recipes": recipe_list})
+
     except Exception as e:
+        print(f"Error in get_recipes: {e}")
         return jsonify({"error": str(e)}), 500
+
 
 @app.route('/get_image', methods=['GET'])
 def get_image():
