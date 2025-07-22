@@ -82,9 +82,10 @@ def get_facts():
 
     return jsonify({"facts": facts_dict})
 
-
 @app.route('/scan_recipe', methods=['POST'])
 def scan_recipe():
+    user_id = request.form.get('user_id')  # Optional user_id
+
     if 'image' not in request.files:
         return jsonify({"error": "No image file provided"}), 400
 
@@ -93,29 +94,59 @@ def scan_recipe():
     if image_file.filename == '':
         return jsonify({"error": "No selected file"}), 400
 
+    # Save with unique filename to avoid collisions
     filename = secure_filename(image_file.filename)
+    unique_filename = f"{uuid.uuid4()}_{filename}"
     save_folder = 'images'
     os.makedirs(save_folder, exist_ok=True)
-    image_path = os.path.join(save_folder, filename)
+    image_path = os.path.join(save_folder, unique_filename)
     image_file.save(image_path)
-
-    print(f"Image saved at: {image_path}")
 
     try:
         gemini_response = get_ingredients_from_image(image_path)
 
-        if gemini_response is None or gemini_response.strip() == "":
+        if not gemini_response or gemini_response.strip() == "":
             return jsonify({"error": "Failed to generate recipe from image"}), 500
 
         parts = gemini_response.strip().split(";")
         if len(parts) < 4 or parts[0] == "0":
             return jsonify({"error": "Gemini could not create a recipe from this image"}), 400
 
+        title = parts[0].strip()
+        description = parts[1].strip()
+        ingredients = [i.strip() for i in parts[2].split(",")]
+        procedures = [p.strip() for p in parts[3].split(",")]
+
+        # Save recipe in DB if user_id provided
+        if user_id:
+            conn = sqlite3.connect(DB_PATH)
+            c = conn.cursor()
+
+            # Make title unique per user
+            original_title = title
+            suffix = 1
+            while True:
+                c.execute('SELECT COUNT(*) FROM recipes WHERE user_id = ? AND title = ?', (user_id, title))
+                count = c.fetchone()[0]
+                if count == 0:
+                    break
+                title = f"{original_title} ({suffix})"
+                suffix += 1
+
+            image_prompt = ""  # You can add prompt logic if available
+
+            c.execute('''
+                INSERT INTO recipes (user_id, title, description, ingredients, procedures, image_prompt, image_path)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+            ''', (user_id, title, description, ",".join(ingredients), ",".join(procedures), image_prompt, image_path))
+            conn.commit()
+            conn.close()
+
         return jsonify({
-            "title": parts[0].strip(),
-            "description": parts[1].strip(),
-            "ingredients": parts[2].split(","),
-            "procedures": parts[3].split(",")
+            "title": title,
+            "description": description,
+            "ingredients": ingredients,
+            "procedures": procedures
         })
 
     except Exception as e:
