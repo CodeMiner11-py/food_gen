@@ -293,6 +293,20 @@ def get_image():
                     SELECT title FROM recipes''')
                 available_titles = [row[0] for row in c.fetchall()]
                 conn.close()
+                title = title.strip()
+                available_titles = [item.strip() for item in available_titles]
+                if title in available_titles:
+                    try:
+                        conn = sqlite3.connect(DB_PATH)
+                        c = conn.cursor()
+                        c.execute('''
+                        SELECT image_path FROM recipes WHERE title = ?''', (title))
+                        sql_return = c.fetchall()
+                        conn.close()
+                        return str(sql_return)
+                    except:
+                        pass
+
                 return jsonify({"error": f"Image not found for {title}", "available_titles": available_titles}), 404
 
             image_path = result[0]
