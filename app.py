@@ -175,6 +175,19 @@ def image_return():
 def get_id():
     return jsonify({"user_id": idfetcher()})
 
+@app.route('/reset_db')
+def reset_db():
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        c = conn.cursor()
+        c.execute('DROP TABLE IF EXISTS users')
+        c.execute('DROP TABLE IF EXISTS recipes')
+        conn.commit()
+        conn.close()
+        init_db()
+        return "Tables dropped, DB reset"
+    except Exception as e:
+        return f"Error: {str(e)}"
 
 @app.route('/create_recipe', methods=['POST'])
 def create_recipe():
