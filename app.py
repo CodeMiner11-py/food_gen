@@ -1,7 +1,7 @@
 import uuid
 import sqlite3
 
-from flask import Flask, request, jsonify, send_file
+from flask import Flask, request, jsonify, send_file, make_response
 from flask_cors import CORS
 
 from recipe_generator import *
@@ -295,7 +295,9 @@ def get_image():
                 return jsonify({"error": "File missing on disk"}), 404
 
             print(f"Sending image from path: {image_path}")
-            return send_file(image_path, mimetype='image/png')
+            response = make_response(send_file(image_path, mimetype='image/png'))
+            response.headers['Access-Control-Allow-Origin'] = "*"
+            return response
 
         except Exception as e:
             print(f"Error: {str(e)}")
