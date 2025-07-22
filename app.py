@@ -280,7 +280,7 @@ def get_image():
             c = conn.cursor()
             c.execute('''
                 SELECT image_path FROM recipes WHERE user_id = ? AND title = ?
-            ''', (user_id, title.replace("_", " ")))
+            ''', (user_id, title))
             result = c.fetchone()
             conn.close()
 
@@ -300,7 +300,7 @@ def get_image():
                         conn = sqlite3.connect(DB_PATH)
                         c = conn.cursor()
                         c.execute('''
-                        SELECT image_path FROM recipes WHERE title = ?''', (title))
+                        SELECT image_path FROM recipes WHERE title = ?''', (title,))
                         sql_return = c.fetchall()
                         conn.close()
                         return str(sql_return)
