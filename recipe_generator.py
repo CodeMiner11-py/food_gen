@@ -127,12 +127,13 @@ Answer in five parts, separated by semicolons.
 The first part is a title for the recipe. Vary this each time, even for the same dish.
 The second part is a friendly description of the dish, along with the time it takes and how many it serves.
 The third part is the ingredients needed, separated by commas (,) (no spaces between commas, but put spaces in the ingredient names as usual). Do not include ingredient numbers. Extra ingredients should fit within the budget. This should not include the ingredients at home. Make sure you use measurements.
-The fourth part is the procedures (multiple) to make the dish, separated by periods (.) (no spaces between periods, but put spaces in procedures as normal). Do not include procedure numbers. Include the full procedures, and don't stop at the first one, otherwise the cook will be unhappy. 
+The fourth part is the procedures (multiple) to make the dish, separated by periods (.) Do not include procedure numbers. Include the full procedures, and don't stop at the first one, otherwise the cook will be unhappy. 
 The fifth part is a description of what the final dish looks like (including its name) that you would give to an image generator to generate an image. Make sure it's short and to the point, and it's a generator that does not know many different types of foods, so explain the food while keeping it short. For example, for a ketchup-mayonaisse dip, tell it to create an image of a cup with orange dip in it.
 Format: title;description;ingredients;procedures;image.
 If you cannot create a meal following these criteria, simply return: 0;0;0;0;0.
 The type of meal requested is a {meal_type}.
-Tip: Try not to include 'Quick' or 'Hearty' or 'Speedy' or any other adjective as the first word in the title.
+
+Try to follow this Tip: Try not to include 'Quick' or 'Hearty' or 'Speedy' or any other adjective as the first word in the title.
 
 Ingredients the user has at home are: {', '.join(ingredients)}.
 User's budget: ${budget}
