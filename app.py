@@ -258,72 +258,75 @@ def get_recipes():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-
 @app.route('/get_image', methods=['GET'])
 def get_image():
-    # GET IMAGE FOR RECIPE
     user_id = request.args.get('user_id')
     title = request.args.get('title')
-    title = title.replace("\n", "").replace("%0A", "").replace("_", " ")
+    title = title.replace("_", " ").strip()
 
-    if user_id == "1" and title == "Simple_Tomato_&_Cheese_Sandwich":
-        return jsonify({"success": True})
+    if not user_id or not title:
+        return jsonify({"error": "Missing user_id or title"}), 400
 
-    else:
-        print(f"Request for image with user_id: {user_id}, title: {title}")
+    print(f"Request for image with user_id: {user_id}, title: {title}")
 
-        if not user_id or not title:
-            return jsonify({"error": "Missing user_id or title"}), 400
-
-        try:
-            conn = sqlite3.connect(DB_PATH)
-            c = conn.cursor()
-            c.execute('''
-                SELECT image_path FROM recipes WHERE user_id = ? AND title = ?
-            ''', (user_id, title))
-            result = c.fetchone()
-            conn.close()
-
-            print(f"Database result: {result}")
-
-            if result is None:
-                conn = sqlite3.connect(DB_PATH)
-                c = conn.cursor()
-                c.execute('''
-                    SELECT title FROM recipes''')
-                available_titles = [row[0] for row in c.fetchall()]
-                conn.close()
-                title = title.strip()
-                available_titles = [item.strip() for item in available_titles]
-                if title in available_titles:
     try:
+        # Main lookup: by user_id and title
         conn = sqlite3.connect(DB_PATH)
         c = conn.cursor()
-        c.execute('SELECT image_path FROM recipes WHERE title = ?', (title,))
-        sql_return = c.fetchone()
+        c.execute('SELECT image_path FROM recipes WHERE user_id = ? AND title = ?', (user_id, title))
+        result = c.fetchone()
         conn.close()
 
-        if sql_return:
-            fallback_path = sql_return[0]
-            if os.path.exists(fallback_path):
-                response = make_response(send_file(fallback_path, mimetype='image/png'))
+        if result:
+            image_path = result[0]
+            print(f"Image path from DB: {image_path}")
+
+            if os.path.exists(image_path):
+                print(f"Sending image from path: {image_path}")
+                response = make_response(send_file(image_path, mimetype='image/png'))
                 response.headers['Access-Control-Allow-Origin'] = "*"
                 return response
             else:
-                print(f"Fallback file does not exist: {fallback_path}")
-                return jsonify({"error": "Fallback image missing"}), 404
+                print(f"File does not exist at: {image_path}")
+                return jsonify({"error": "File missing on disk"}), 404
 
-        image_path = result[0]
-        print(f"Image path from DB: {image_path}")
+        # Fallback: check by title only (ignore user_id)
+        conn = sqlite3.connect(DB_PATH)
+        c = conn.cursor()
+        c.execute('SELECT title FROM recipes')
+        available_titles = [row[0].strip() for row in c.fetchall()]
+        conn.close()
 
-        if not os.path.exists(image_path):
-            print(f"File does not exist at: {image_path}")
-            return jsonify({"error": "File missing on disk"}), 404
+        if title in available_titles:
+            try:
+                conn = sqlite3.connect(DB_PATH)
+                c = conn.cursor()
+                c.execute('SELECT image_path FROM recipes WHERE title = ?', (title,))
+                sql_return = c.fetchone()
+                conn.close()
 
-        print(f"Sending image from path: {image_path}")
-        response = make_response(send_file(image_path, mimetype='image/png'))
-        response.headers['Access-Control-Allow-Origin'] = "*"
-        return response
+                if sql_return:
+                    fallback_path = sql_return[0]
+                    if os.path.exists(fallback_path):
+                        print(f"Fallback image found: {fallback_path}")
+                        response = make_response(send_file(fallback_path, mimetype='image/png'))
+                        response.headers['Access-Control-Allow-Origin'] = "*"
+                        return response
+                    else:
+                        print(f"Fallback file does not exist: {fallback_path}")
+                        return jsonify({"error": "Fallback image missing"}), 404
+
+                return jsonify({"error": "Title matched, but no image_path"}), 404
+
+            except Exception as e:
+                print(f"Error in fallback block: {str(e)}")
+                return jsonify({"error": str(e)}), 500
+
+        # No match at all
+        return jsonify({
+            "error": f"Image not found for {title}",
+            "available_titles": available_titles
+        }), 404
 
     except Exception as e:
         print(f"Error: {str(e)}")
