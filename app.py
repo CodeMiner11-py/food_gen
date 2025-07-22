@@ -296,34 +296,38 @@ def get_image():
                 title = title.strip()
                 available_titles = [item.strip() for item in available_titles]
                 if title in available_titles:
-                    try:
-                        conn = sqlite3.connect(DB_PATH)
-                        c = conn.cursor()
-                        c.execute('''
-                        SELECT image_path FROM recipes WHERE title = ?''', (title,))
-                        sql_return = c.fetchall()
-                        conn.close()
-                        return str(sql_return)
-                    except:
-                        pass
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        c = conn.cursor()
+        c.execute('SELECT image_path FROM recipes WHERE title = ?', (title,))
+        sql_return = c.fetchone()
+        conn.close()
 
-                return jsonify({"error": f"Image not found for {title}", "available_titles": available_titles}), 404
+        if sql_return:
+            fallback_path = sql_return[0]
+            if os.path.exists(fallback_path):
+                response = make_response(send_file(fallback_path, mimetype='image/png'))
+                response.headers['Access-Control-Allow-Origin'] = "*"
+                return response
+            else:
+                print(f"Fallback file does not exist: {fallback_path}")
+                return jsonify({"error": "Fallback image missing"}), 404
 
-            image_path = result[0]
-            print(f"Image path from DB: {image_path}")
+        image_path = result[0]
+        print(f"Image path from DB: {image_path}")
 
-            if not os.path.exists(image_path):
-                print(f"File does not exist at: {image_path}")
-                return jsonify({"error": "File missing on disk"}), 404
+        if not os.path.exists(image_path):
+            print(f"File does not exist at: {image_path}")
+            return jsonify({"error": "File missing on disk"}), 404
 
-            print(f"Sending image from path: {image_path}")
-            response = make_response(send_file(image_path, mimetype='image/png'))
-            response.headers['Access-Control-Allow-Origin'] = "*"
-            return response
+        print(f"Sending image from path: {image_path}")
+        response = make_response(send_file(image_path, mimetype='image/png'))
+        response.headers['Access-Control-Allow-Origin'] = "*"
+        return response
 
-        except Exception as e:
-            print(f"Error: {str(e)}")
-            return jsonify({"error": str(e)}), 500
+    except Exception as e:
+        print(f"Error: {str(e)}")
+        return jsonify({"error": str(e)}), 500
 
 
 if __name__ == "__main__":
