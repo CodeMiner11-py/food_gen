@@ -10,16 +10,13 @@ app = Flask(__name__)
 CORS(app)
 DB_PATH = "recipes.db"
 
-
 def init_db():
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
 
-    # Drop users table to fix schema
-    c.execute('DROP TABLE IF EXISTS users')
-
+    # Create users table only if it doesn't exist
     c.execute('''
-        CREATE TABLE users (
+        CREATE TABLE IF NOT EXISTS users (
             id TEXT PRIMARY KEY
         )
     ''')
@@ -38,7 +35,6 @@ def init_db():
 
     conn.commit()
     conn.close()
-
 
 init_db()
 
@@ -188,9 +184,9 @@ def create_recipe():
     time = data.get('time', 0)
     serves = data.get('serves', 0)
     meal_type = data.get('meal_type', 'dinner')
-    user_id = data.get('user_id', None)
+    user_id = data.get('user_id')
 
-    if user_id is None:
+    if not user_id:
         return jsonify({"error": "Missing user_id"}), 400
 
     try:
@@ -200,15 +196,19 @@ def create_recipe():
 
         title, desc, ing, procedures, prompt, image_path = result
 
-        count = 711
-        while count > 0:
-            conn = sqlite3.connect(DB_PATH)
-            c = conn.cursor()
+        # Ensure title is unique for that user
+        conn = sqlite3.connect(DB_PATH)
+        c = conn.cursor()
+
+        original_title = title
+        suffix = 1
+        while True:
             c.execute('SELECT COUNT(*) FROM recipes WHERE user_id = ? AND title = ?', (user_id, title))
             count = c.fetchone()[0]
-            if count > 0:
-                conn.close()
-                title = newName(title)
+            if count == 0:
+                break
+            title = f"{original_title} ({suffix})"
+            suffix += 1
 
         c.execute('''
             INSERT INTO recipes (user_id, title, description, ingredients, procedures, image_prompt, image_path)
@@ -216,6 +216,8 @@ def create_recipe():
         ''', (user_id, title, desc, ing, procedures, prompt, image_path))
         conn.commit()
         conn.close()
+
+        print(f"SAVED: {title} for user {user_id}")
 
         return jsonify({
             "title": title,
@@ -227,7 +229,9 @@ def create_recipe():
         })
 
     except Exception as e:
+        print(f"Error in create_recipe: {str(e)}")
         return jsonify({"error": str(e)}), 500
+
 
 @app.route('/get_recipes', methods=['GET'])
 def get_recipes():
