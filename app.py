@@ -287,7 +287,13 @@ def get_image():
             print(f"Database result: {result}")
 
             if result is None:
-                return jsonify({"error": f"Image not found for {title}"}), 404
+                conn = sqlite3.connect(DB_PATH)
+                c = conn.cursor()
+                c.execute('''
+                    SELECT title FROM recipes''')
+                available_titles = [row[0] for row in c.fetchall()]
+                conn.close()
+                return jsonify({"error": f"Image not found for {title}", "available_titles": available_titles}), 404
 
             image_path = result[0]
             print(f"Image path from DB: {image_path}")
