@@ -230,7 +230,6 @@ def newName(oldName):
 
 def get_shopping_list(need_to_buy):
     prompt = """What is the price in US dollars of the following ingredients combined? Estimate the prices for each ingredient. Measurements are given. Ingredients are separated by the comm a symbol (,). Please give your best estimate considering typical grocery prices, without a description and just a value please.
-
 """
     for ing in need_to_buy:
         prompt += ing + ",\n"

@@ -155,11 +155,6 @@ def scan_recipe():
 
 def idfetcher():
     new_id = str(uuid.uuid4())  # generate UUID string
-    conn = sqlite3.connect(DB_PATH)
-    c = conn.cursor()
-    c.execute('INSERT INTO users (id) VALUES (?)', (new_id,))
-    conn.commit()
-    conn.close()
     return new_id
 
 
