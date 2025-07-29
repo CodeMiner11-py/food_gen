@@ -1,5 +1,8 @@
 import uuid
-import sqlite3
+import sqlite3, base64
+
+import requests
+from flask import current_app
 
 from flask import Flask, request, jsonify, send_file, make_response
 from flask_cors import CORS
@@ -7,8 +10,55 @@ from flask_cors import CORS
 from recipe_generator import *
 
 app = Flask(__name__)
+
+app.config['SPOTIFY_CLIENT_ID'] = os.getenv('SPOTIFY_CLIENT_ID')
+app.config['SPOTIFY_CLIENT_SECRET'] = os.getenv('SPOTIFY_CLIENT_SECRET')
+app.config['SPOTIFY_SHOW_ID'] = "7C7zL1MoVdOjUgxQyhO6rQ"
 CORS(app)
 DB_PATH = "recipes.db"
+
+@app.route('/api/spotify-episodes', methods=['GET'])
+def spotify_episodes():
+    show_id = current_app.config.get('SPOTIFY_SHOW_ID', '7C7zL1MoVdOjUgxQyhO6rQ')
+    try:
+        access_token = get_spotify_access_token()
+    except Exception as e:
+        return jsonify({"error": f"Failed to get Spotify access token: {str(e)}"}), 500
+
+    episodes = []
+    url = f'https://api.spotify.com/v1/shows/{show_id}/episodes?limit=50'
+    headers = {'Authorization': f'Bearer {access_token}'}
+
+    try:
+        while url:
+            res = requests.get(url, headers=headers)
+            res.raise_for_status()
+            data = res.json()
+            episodes.extend(data['items'])
+            url = data.get('next')
+
+        mapped = [{'title': ep['name'], 'spotifyId': ep['id']} for ep in episodes]
+        return jsonify(mapped)
+    except Exception as e:
+        return jsonify({"error": f"Failed to fetch episodes from Spotify API: {str(e)}"}), 500
+
+def get_spotify_access_token():
+    client_id = current_app.config.get('SPOTIFY_CLIENT_ID')
+    client_secret = current_app.config.get('SPOTIFY_CLIENT_SECRET')
+    if not client_id or not client_secret:
+        raise Exception("Spotify client ID or secret not configured")
+
+    auth_str = f"{client_id}:{client_secret}"
+    b64_auth_str = base64.b64encode(auth_str.encode()).decode()
+
+    headers = {
+        'Authorization': f'Basic {b64_auth_str}',
+        'Content-Type': 'application/x-www-form-urlencoded'
+    }
+    data = {'grant_type': 'client_credentials'}
+    response = requests.post('https://accounts.spotify.com/api/token', headers=headers, data=data)
+    response.raise_for_status()
+    return response.json()['access_token']
 
 def init_db():
     conn = sqlite3.connect(DB_PATH)
