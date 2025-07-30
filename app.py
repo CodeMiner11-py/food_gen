@@ -17,6 +17,10 @@ app.config['SPOTIFY_SHOW_ID'] = "7C7zL1MoVdOjUgxQyhO6rQ"
 CORS(app)
 DB_PATH = "recipes.db"
 
+@app.route('/ping', methods=['GET'])
+def ping():
+    return jsonify({"message": "Pong!"})
+
 @app.route('/api/spotify-episodes', methods=['GET'])
 def spotify_episodes():
     show_id = current_app.config.get('SPOTIFY_SHOW_ID', '7C7zL1MoVdOjUgxQyhO6rQ')
