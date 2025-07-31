@@ -1,3 +1,5 @@
+from sqlalchemy import create_engine, text
+from werkzeug.security import generate_password_hash, check_password_hash
 import uuid
 import sqlite3, base64
 
@@ -16,6 +18,10 @@ app.config['SPOTIFY_CLIENT_SECRET'] = os.getenv('SPOTIFY_CLIENT_SECRET')
 app.config['SPOTIFY_SHOW_ID'] = "7C7zL1MoVdOjUgxQyhO6rQ"
 CORS(app)
 DB_PATH = "recipes.db"
+
+# PostgreSQL connection setup
+POSTGRES_DB_URL = os.getenv("DATABASE_URL", "postgresql://localhost/readers")
+pg_engine = create_engine(POSTGRES_DB_URL, pool_pre_ping=True)
 
 @app.route('/ping', methods=['GET'])
 def ping():
@@ -89,6 +95,18 @@ def init_db():
 
     conn.commit()
     conn.close()
+
+
+# Initialize the readers table in PostgreSQL
+def init_reader_db():
+    with pg_engine.connect() as conn:
+        conn.execute(text('''
+            CREATE TABLE IF NOT EXISTS readers (
+                email TEXT PRIMARY KEY,
+                password_hash TEXT NOT NULL,
+                sessions_left INTEGER DEFAULT 55
+            )
+        '''))
 
 init_db()
 
@@ -436,5 +454,68 @@ def get_image():
         return jsonify({"error": str(e)}), 500
 
 
-if __name__ == "__main__":
-    app.run(debug=True)
+# Book-related routes for reader DB
+@app.route('/signup', methods=['POST'])
+def signup():
+    data = request.json
+    email = data.get('email')
+    password = data.get('password')
+
+    with pg_engine.connect() as conn:
+        user = conn.execute(text("SELECT * FROM readers WHERE email = :email"), {"email": email}).fetchone()
+        if user:
+            return jsonify(0)
+
+        hash_pw = generate_password_hash(password)
+        conn.execute(text("INSERT INTO readers (email, password_hash) VALUES (:email, :hash)"),
+                     {"email": email, "hash": hash_pw})
+        return jsonify(1)
+
+@app.route('/login', methods=['POST'])
+def login():
+    data = request.json
+    email = data.get('email')
+    password = data.get('password')
+
+    with pg_engine.connect() as conn:
+        user = conn.execute(text("SELECT password_hash FROM readers WHERE email = :email"),
+                            {"email": email}).fetchone()
+        if user and check_password_hash(user[0], password):
+            return jsonify(1)
+        return jsonify(0)
+
+@app.route('/session', methods=['POST'])
+def get_session_count():
+    data = request.json
+    email = data.get('email')
+    password = data.get('password')
+
+    with pg_engine.connect() as conn:
+        user = conn.execute(text("SELECT password_hash, sessions_left FROM readers WHERE email = :email"),
+                            {"email": email}).fetchone()
+        if user and check_password_hash(user[0], password):
+            return jsonify(user[1])
+        return jsonify(-1)
+
+@app.route('/read', methods=['POST'])
+def subtract_session():
+    data = request.json
+    email = data.get('email')
+    password = data.get('password')
+
+    with pg_engine.begin() as conn:
+        user = conn.execute(text("SELECT password_hash, sessions_left FROM readers WHERE email = :email FOR UPDATE"),
+                            {"email": email}).fetchone()
+        if not user or not check_password_hash(user[0], password):
+            return jsonify(-1)
+        if user[1] <= 0:
+            return jsonify(-1)
+
+        new_sessions = user[1] - 1
+        conn.execute(text("UPDATE readers SET sessions_left = :new_sessions WHERE email = :email"),
+                     {"new_sessions": new_sessions, "email": email})
+        return jsonify(new_sessions)
+
+# Call the reader DB initialization
+init_reader_db()
+app.run(debug=True)
