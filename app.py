@@ -480,7 +480,7 @@ def login():
     with pg_engine.connect() as conn:
         user = conn.execute(text("SELECT password_hash FROM readers WHERE email = :email"),
                             {"email": email}).fetchone()
-        if user and check_password_hash(user[0], password) or (email == "ADMINUSER" and password == "ADMINPASS"):
+        if user and check_password_hash(user[0], password):
             return jsonify(1)
         return jsonify(0)
 
