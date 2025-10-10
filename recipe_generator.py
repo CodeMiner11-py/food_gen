@@ -28,7 +28,7 @@ generation_config = {
 }
 
 model = genai.GenerativeModel(
-    model_name="gemini-1.5-flash-8b",
+    model_name="gemini-2.5-flash-lite",
 )
 
 
@@ -199,7 +199,7 @@ def get_ingredients_from_image(image_path):
     Uses Gemini Vision to analyze the image and extract possible ingredients.
     """
     try:
-        model = genai.GenerativeModel(model_name="gemini-1.5-flash")
+        model = genai.GenerativeModel(model_name="gemini-2.5-flash-lite")
         image_data = Image.open(image_path)
 
         # You can ask for ingredients or a description of the meal
