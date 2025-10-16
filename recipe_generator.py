@@ -6,7 +6,6 @@ from google import genai
 from google.genai import types
 
 # Configure the API key
-genai.configure(api_key="your-api-key")
 
 # Initialize the client
 client = genai.Client()
