@@ -2,46 +2,50 @@ import os
 import uuid
 from PIL import Image
 from io import BytesIO
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 
-tokens = type("EmptyObject", (), {})()
-tokens.google_token = os.getenv("GOOGLE_TOKEN")
-genai.configure(api_key=tokens.google_token)
+# Configure the API key
+genai.configure(api_key="your-api-key")
 
-generation_config = {
-    "temperature": 1,
-    "top_p": 0.95,
-    "top_k": 40,
-    "max_output_tokens": 8192,
-    "response_mime_type": "text/plain",
-}
+# Initialize the client
+client = genai.Client()
+
+# Define generation configuration
+generation_config = types.GenerationConfig(
+    temperature=1,
+    top_p=0.95,
+    top_k=40,
+    max_output_tokens=8192,
+    response_mime_type="text/plain",
+)
 
 def get_response(prompt):
-    model = genai.GenerativeModel(model_name="gemini-2.5-flash-lite")
-    chat_session = model.start_chat(
-        history=[{"role": "user", "parts": [prompt]}]
-    )
-    response = chat_session.send_message(prompt)
-    return response.text
-
-def get_image_google(prompt, save_path="generated_images.png"):
-    import base64
-    from io import BytesIO
-    from PIL import Image
-    prompt += str(uuid.uuid4())
-    response = genai.images.generate(
+    """Generate a textual response based on the prompt."""
+    response = client.models.generate_content(
         model="gemini-2.5-flash",
-        prompt=prompt,
-        size="1024x1024"
+        contents=[types.Content(parts=[types.Part(text=prompt)])],
+        config=generation_config,
     )
-    image_bytes = base64.b64decode(response[0].b64_bytes)
-    img = Image.open(BytesIO(image_bytes))
-    os.makedirs(os.path.dirname(save_path), exist_ok=True)
-    img.save(save_path)
-    return save_path
+    return response.candidates[0].content.parts[0].text
 
+def get_image_google(prompt, save_path="generated_image.png"):
+    """Generate an image based on the prompt and save it."""
+    prompt += str(uuid.uuid4())  # Add a unique identifier to the prompt
+    response = client.models.generate_content(
+        model="gemini-2.5-flash-image",
+        contents=[types.Content(parts=[types.Part(text=prompt)])],
+    )
+    for part in response.candidates[0].content.parts:
+        if part.inline_data:
+            image = Image.open(BytesIO(part.inline_data.data))
+            os.makedirs(os.path.dirname(save_path), exist_ok=True)
+            image.save(save_path)
+            return save_path
+    return None
 
 def get_recipe(ingredients, budget, serves, time, meal_type):
+    """Generate a recipe based on the provided details."""
     prompt = f"""Create a response as follows.
 You will be given ingredients the user has at home.
 You will also be given the user's budget for how many extra ingredients they can buy.
@@ -73,11 +77,8 @@ PLEASE MAKE SURE YOU FOLLOW THESE CRITERIA. THIS INFORMATION IS CRUCIAL FOR OUR 
     get_image_google(answer[4], image_path)
     return [answer[0].strip('\n'), answer[1], answer[2], answer[3], answer[4], image_path]
 
-def get_directories(path):
-    with os.scandir(path) as entries:
-        return [entry.name for entry in entries if entry.is_dir()]
-
 def get_nutrition_facts(recipe_text):
+    """Estimate the nutrition facts for the given recipe."""
     prompt = f"""
 Your job is to analyze the recipe above and estimate the nutrition facts of it combined.
 Please separate your response into the following parts. Use semicolons (;) to separate your response.
@@ -107,6 +108,7 @@ The recipe is below, and is structured into title;description;ingredients;proced
     return get_response(prompt)
 
 def get_ingredients_from_image(image_path):
+    """Generate a recipe based on the ingredients identified from the image."""
     try:
         model = genai.GenerativeModel(model_name="gemini-2.5-flash-lite")
         image_data = Image.open(image_path)
@@ -130,9 +132,11 @@ The type of meal requested is a dish.
         return None
 
 def newName(oldName):
+    """Generate a new, different-sounding title for the given recipe."""
     return get_response("Please generate a new, different-sounding title for this recipe. Give your response as just the title please. The old name is: "+oldName)
 
 def get_shopping_list(need_to_buy):
+    """Estimate the total price of the ingredients the user needs to buy."""
     prompt = """What is the price in US dollars of the following ingredients combined? Estimate the prices for each ingredient. Measurements are given. Ingredients are separated by the comm a symbol (,). Please give your best estimate considering typical grocery prices, without a description and just a value please.
 """
     for ing in need_to_buy:

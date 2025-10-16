@@ -1,6 +1,6 @@
 Flask==2.2.5
 gunicorn==20.1.0
-google-generativeai
+google-generativeai==1.45.0
 Pillow
 requests
 flask-cors==5.0.1
