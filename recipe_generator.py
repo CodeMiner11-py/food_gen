@@ -25,19 +25,21 @@ def get_response(prompt):
     return response.text
 
 def get_image_google(prompt, save_path="generated_images.png"):
+    import base64
+    from io import BytesIO
+    from PIL import Image
     prompt += str(uuid.uuid4())
-    client = genai.Client()
-    response = client.models.generate_content(
-        model="gemini-2.5-flash-image",
-        contents=[prompt]
+    response = genai.images.generate(
+        model="gemini-2.5-flash",
+        prompt=prompt,
+        size="1024x1024"
     )
-    for part in response.candidates[0].content.parts:
-        if part.inline_data is not None:
-            img = Image.open(BytesIO(part.inline_data.data))
-            os.makedirs(os.path.dirname(save_path), exist_ok=True)
-            img.save(save_path)
-            return save_path
-    return None
+    image_bytes = base64.b64decode(response[0].b64_bytes)
+    img = Image.open(BytesIO(image_bytes))
+    os.makedirs(os.path.dirname(save_path), exist_ok=True)
+    img.save(save_path)
+    return save_path
+
 
 def get_recipe(ingredients, budget, serves, time, meal_type):
     prompt = f"""Create a response as follows.
