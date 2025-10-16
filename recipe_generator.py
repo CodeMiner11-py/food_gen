@@ -2,7 +2,7 @@ import google.generativeai as genai
 import os
 import uuid
 from PIL import Image
-from google import genai as genai_client_module
+import google.generativeai as genai_client_module
 
 class EmptyObject:
     def __init__(self):
