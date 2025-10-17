@@ -13,11 +13,10 @@ client = genai.Client()
 # Define generation configuration
 generation_config = types.GenerationConfig(
     temperature=1,
-    top_p=0.95,
-    top_k=40,
     max_output_tokens=8192,
     response_mime_type="text/plain",
 )
+generation_config = generation_config.to_json_dict()
 
 def get_response(prompt):
     """Generate a textual response based on the prompt."""
