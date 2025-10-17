@@ -19,6 +19,34 @@ app.config['SPOTIFY_SHOW_ID'] = "7C7zL1MoVdOjUgxQyhO6rQ"
 CORS(app)
 DB_PATH = "recipes.db"
 
+@app.route("/")
+def home():
+    return """
+    <html>
+        <head>
+            <meta http-equiv="refresh" content="3;url=https://kidslearninglab.com">
+            <title>Loading...</title>
+            <style>
+                body {
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    height: 100vh;
+                    margin: 0;
+                    font-family: Arial, sans-serif;
+                    background-color: #f0f0f0;
+                }
+                h1 {
+                    font-size: 5em;
+                    color: #333;
+                }
+            </style>
+        </head>
+        <body>
+            <h1>Loading...</h1>
+        </body>
+    </html>
+    """
 
 @app.route('/ping', methods=['GET'])
 def ping():
@@ -48,6 +76,11 @@ def spotify_episodes():
         return jsonify(mapped)
     except Exception as e:
         return jsonify({"error": f"Failed to fetch episodes from Spotify API: {str(e)}"}), 500
+
+@app.route("/get_response", methods=["GET"])
+def get_response_from_ai():
+    prompt = request.args.get("prompt", "")
+    return get_response(prompt)
 
 def get_spotify_access_token():
     client_id = current_app.config.get('SPOTIFY_CLIENT_ID')
