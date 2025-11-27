@@ -149,6 +149,11 @@ from flask import request, jsonify
 from werkzeug.utils import secure_filename
 import os
 
+@app.route("/example/post", methods=['POST'])
+def example_post():
+    data = request.get_json(force=True)
+    name = data['name']
+    return jsonify({"response": f"Hello there {name}! Thanks for buying this book!"})
 
 @app.route('/get_facts', methods=['POST'])
 def get_facts():
