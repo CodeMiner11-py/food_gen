@@ -52,6 +52,10 @@ def home():
 def ping():
     return jsonify({"message": "Pong!"})
 
+@app.route("/example/get", methods=['GET'])
+def example_get():
+    return jsonify({"message": "Hello there!", "status": "API working"})
+
 @app.route('/api/spotify-episodes', methods=['GET'])
 def spotify_episodes():
     show_id = current_app.config.get('SPOTIFY_SHOW_ID', '7C7zL1MoVdOjUgxQyhO6rQ')
