@@ -120,30 +120,24 @@ crop_bottom_pixels = crop_bottom
 
 
 def get_recipe(ingredients, budget, serves, time, meal_type):
-    prompt = f"""Create a response as follows.
-You will be given ingredients the user has at home.
-You will also be given the user's budget for how many extra ingredients they can buy.
-Answer in five parts, separated by semicolons.
-The first part is a title for the recipe. Vary this each time, even for the same dish.
-The second part is a friendly description of the dish, along with the time it takes and how many it serves.
-The third part is the ingredients needed, separated by commas (,) (no spaces between commas, but put spaces in the ingredient names as usual). Do not include ingredient numbers. Extra ingredients should fit within the budget. This should not include the ingredients at home. Make sure you use measurements.
-The fourth part is the procedures (multiple) to make the dish, separated by periods (.) Do not include procedure numbers. Include the full procedures, and don't stop at the first one, otherwise the cook will be unhappy. 
-The fifth part is a description of what the final dish looks like (including its name) that you would give to an image generator to generate an image. Make sure it's short and to the point, and it's a generator that does not know many different types of foods, so explain the food while keeping it short. For example, for a ketchup-mayonaisse dip, tell it to create an image of a cup with orange dip in it.
-Format: title;description;ingredients;procedures;image.
-If you cannot create a meal following these criteria, simply return: 0;0;0;0;0.
-The type of meal requested is a {meal_type}.
+    prompt = f"""Output exactly in five parts separated by semicolons: 
+    title;description;ingredients;procedures;image.
 
-Try to follow this Tip: Try not to include 'Quick' or 'Hearty' or 'Speedy' or any other adjective as the first word in the title.
+    1. Title: Make it unique each time, do not start with 'Quick', 'Hearty', or similar adjectives.
+    2. Description: Friendly description of the dish, including time and servings.
+    3. Ingredients: Only list ingredients the user does NOT have at home, separated by commas, include measurements.
+    4. Procedures: Steps to make the dish, separated by commas (no periods). Include all steps.
+    5. Image: Short description for image generation of the final dish, including its name.
 
-Ingredients the user has at home are: {', '.join(ingredients)}.
-User's budget: ${budget}
-The user has {time} minutes to make this meal.
-The user needs to serve {serves} people.
+    If you cannot create a recipe following these rules, return: 0;0;0;0;0.
 
-Please remember The Important Rule: In Ingredients, only use commas to separate new ingredients. The user will see bullet points added for every new comma.
-The same goes for Procedures: Only use commas to separate a new procedure: periods are not needed. The user, again, will see bullet points added for every new comma.
+    Meal type: {meal_type}
+    Ingredients the user has: {', '.join(ingredients)}
+    User budget for extra ingredients: ${budget}
+    Time available: {time} minutes
+    Serves: {serves} people
+    """
 
-PLEASE MAKE SURE YOU FOLLOW THESE CRITERIA. THIS INFORMATION IS CRUCIAL FOR OUR APPLICATION. THANK YOU."""
     answer = get_response(prompt).split(';')
 
     # Handle invalid
