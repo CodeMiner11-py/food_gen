@@ -140,7 +140,10 @@ User's budget: ${budget}
 The user has {time} minutes to make this meal.
 The user needs to serve {serves} people.
 
-PLEASE MAKE SURE YOU FOLLOW THESE CRITERIA. THIS INFORMATION IS CRUCIAL FOR OUR APPLICATION."""
+Please remember The Important Rule: In Ingredients, only use commas to separate new ingredients. The user will see bullet points added for every new comma.
+The same goes for Procedures: Only use commas to separate a new procedure: periods are not needed. The user, again, will see bullet points added for every new comma.
+
+PLEASE MAKE SURE YOU FOLLOW THESE CRITERIA. THIS INFORMATION IS CRUCIAL FOR OUR APPLICATION. THANK YOU."""
     answer = get_response(prompt).split(';')
 
     # Handle invalid
