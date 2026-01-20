@@ -129,9 +129,9 @@ title: a short, clear recipe title.
 
 description: a short description of the recipe.
 
-ingredients: a single string where each ingredient is separated by the pipe symbol |. No numbers, bullets, or extra characters.
+ingredients: a single string where each ingredient is separated by the pipe symbol ,. No numbers, bullets, or extra characters.
 
-procedures: a single string where each step is separated by the pipe symbol |. No numbers, bullets, or extra characters.
+procedures: a single string where each step is separated by the pipe symbol ,. No numbers, bullets, or extra characters.
 
 imagedescription: a short description of the image.
 
@@ -142,7 +142,7 @@ Separate the five fields strictly with semicolons ;.
 Do not add extra text, explanations, or formatting outside the string.
 
 Example output:
-"Spaghetti Bolognese;A classic Italian pasta dish;spaghetti|ground beef|tomato sauce|onion|garlic;cook pasta|brown beef|add sauce|mix together|serve;a plate of spaghetti with sauce"
+"Spaghetti Bolognese;A classic Italian pasta dish;spaghetti,ground beef,tomato sauce,onion,garlic;cook pasta,brown beef,add sauce,mix together,serve;a plate of spaghetti with sauce"
 
 Make each procedure a sentence. Here is the data the user has given you:
 
