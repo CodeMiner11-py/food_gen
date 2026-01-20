@@ -125,8 +125,8 @@ def get_recipe(ingredients, budget, serves, time, meal_type):
 
     1. Title: Make it unique each time, do not start with 'Quick', 'Hearty', or similar adjectives.
     2. Description: Friendly description of the dish, including time and servings.
-    3. Ingredients: Only list ingredients the user does NOT have at home, separated by commas, include measurements. If the user has all the needed requirements, simply state so. If not, provide the comma-separated list.
-    4. Procedures: Steps to make the dish, separated by commas (no periods). Include all steps.
+    3. Ingredients: Only list ingredients the user does NOT have at home, separated by a vertical bar (|), include measurements. If the user has all the needed requirements, simply state so. If not, provide the bar-separated list.
+    4. Procedures: Steps to make the dish, separated by a vertical bar (no periods). Include all steps.
     5. Image: Short description for image generation of the final dish, including its name.
 
     If you cannot create a recipe following these rules, return: 0;0;0;0;0.
