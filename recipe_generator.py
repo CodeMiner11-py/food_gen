@@ -120,37 +120,40 @@ crop_bottom_pixels = crop_bottom
 
 
 def get_recipe(ingredients, budget, serves, time, meal_type):
-    prompt = f"""You are a recipe generator. Return exactly one string containing five fields in this order:
-[title;description;ingredients;procedures;imagedescription].
+    prompt = f"""You are a recipe generator. Generate exactly one string with five fields in this order, separated strictly by semicolons ;: title;description;ingredients;procedures;imagedescription.
 
-Formatting rules:
+Rules:
 
-title: a short, clear recipe title.
+title: short, clear recipe title.
 
-description: a short description of the recipe.
+description: brief summary of the recipe.
 
-ingredients: a single string where each ingredient is separated by the pipe symbol ,. No numbers, bullets, or extra characters.
+ingredients: list all ingredients in a single string, separated by commas ,. Do not add numbers, bullets, or extra characters. Include only ingredients needed for the recipe, considering the user’s budget {budget}.
 
-procedures: a single string where each step is separated by the pipe symbol ,. No numbers, bullets, or extra characters.
+procedures: list all steps as full sentences in a single string, separated by commas ,. No numbers, bullets, or extra characters. Each step should be clear and actionable.
 
-imagedescription: a short description of the image.
+imagedescription: short description of the dish as it would appear in an image.
 
 Important:
 
-Separate the five fields strictly with semicolons ;.
+Do not add any extra text, explanations, or formatting outside the string.
 
-Do not add extra text, explanations, or formatting outside the string.
+Each field must exist; do not leave anything blank.
 
-Example output:
-"Spaghetti Bolognese;A classic Italian pasta dish;spaghetti,ground beef,tomato sauce,onion,garlic;cook pasta,brown beef,add sauce,mix together,serve;a plate of spaghetti with sauce"
+Example:
+Spaghetti Bolognese;A classic Italian pasta dish;spaghetti,ground beef,tomato sauce,onion,garlic;Cook pasta until al dente,Brown beef in a pan,Add tomato sauce and onion,Mix pasta with sauce,Serve hot;a plate of spaghetti with rich tomato sauce and beef
 
-Make each procedure a sentence. Here is the data the user has given you:
+User data:
 
-INGREDIENTS THE USER HAS or WHAT THE USER WANTS TO MAKE: {ingredients}
-BUDGET THE USER HAS TO BUY EXTRA INGREDIENTS: {budget}
-HOW MANY PEOPLE MUST BE SERVED: {serves}
-TIME THE USER HAS IN MINUTES: {time}
-THE TYPE OF MEAL THE USER WANTS: "{meal_type}"
+Ingredients available: {ingredients}
+
+Budget for extra ingredients: {budget}
+
+Serves: {serves}
+
+Time available (minutes): {time}
+
+Meal type: {meal_type}"
     """
 
     answer = get_response(prompt).split(';')
