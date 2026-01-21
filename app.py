@@ -1,3 +1,5 @@
+from io import BytesIO
+
 from sqlalchemy import create_engine, text
 from werkzeug.security import generate_password_hash, check_password_hash
 import uuid
@@ -148,6 +150,43 @@ def get_next_user_id():
 from flask import request, jsonify
 from werkzeug.utils import secure_filename
 import os
+
+WORKER_URL = "https://foodgenimage.kidslearninglab099.workers.dev/"
+WORKER_API_KEY = "bob"  # placeholder
+
+@app.route("/generate_image", methods=["POST"])
+def generate_image():
+    data = request.get_json(force=True)
+    if not data or "prompt" not in data:
+        return {"error": "Missing 'prompt' in JSON"}, 400
+
+    prompt = data["prompt"]
+
+    try:
+        # Call your Cloudflare Worker
+        response = requests.post(
+            WORKER_URL,
+            headers={
+                "Authorization": f"Bearer {WORKER_API_KEY}",
+                "Content-Type": "application/json"
+            },
+            json={"prompt": prompt},
+            timeout=30
+        )
+
+        if response.status_code != 200:
+            return {"error": f"Worker failed: {response.text}"}, response.status_code
+
+        # response.content is raw JPEG bytes
+        return send_file(
+            BytesIO(response.content),
+            mimetype="image/jpeg",
+            as_attachment=False,
+            download_name="generated.jpg"
+        )
+
+    except Exception as e:
+        return {"error": str(e)}, 500
 
 @app.route("/example/post", methods=['POST'])
 def example_post():
@@ -318,27 +357,50 @@ def reset_db():
 @app.route('/create_recipe', methods=['POST'])
 def create_recipe():
     data = request.json
+    user_id = data.get('user_id')
     ingredients = data.get('ingredients', [])
     budget = data.get('budget', 0)
-    time = data.get('time', 0)
+    time_val = data.get('time', 0)
     serves = data.get('serves', 0)
     meal_type = data.get('meal_type', 'dinner')
-    user_id = data.get('user_id')
+    prompt = data.get('prompt', '')  # prompt for AI image
 
     if not user_id:
         return jsonify({"error": "Missing user_id"}), 400
 
+    # Generate a unique filename for the AI image
+    image_filename = f"images/{uuid.uuid4()}.jpg"
+    os.makedirs(os.path.dirname(image_filename), exist_ok=True)
+
     try:
-        result = get_recipe(ingredients, budget, serves, time, meal_type)
+        # Call your Cloudflare Worker to generate image
+        response = requests.post(
+            WORKER_URL,
+            headers={
+                "Authorization": f"Bearer {WORKER_API_KEY}",
+                "Content-Type": "application/json"
+            },
+            json={"prompt": prompt},
+            timeout=30
+        )
+
+        if response.status_code != 200:
+            return jsonify({"error": f"Worker failed: {response.text}"}), response.status_code
+
+        # Save image bytes to disk
+        with open(image_filename, "wb") as f:
+            f.write(response.content)
+
+        # For the recipe itself, you can still call get_recipe or your existing logic
+        result = get_recipe(ingredients, budget, serves, time_val, meal_type)
         if result == ["0", "0", "0", "0", "0"]:
             return jsonify({"error": "Could not generate recipe"}), 400
 
-        title, desc, ing, procedures, prompt, image_path = result
+        title, desc, ing, procedures, _, _ = result
 
-        # Ensure title is unique for that user
+        # Make title unique per user
         conn = sqlite3.connect(DB_PATH)
         c = conn.cursor()
-
         original_title = title
         suffix = 1
         while True:
@@ -349,14 +411,13 @@ def create_recipe():
             title = f"{original_title} ({suffix})"
             suffix += 1
 
+        # Save recipe in DB with new image path
         c.execute('''
             INSERT INTO recipes (user_id, title, description, ingredients, procedures, image_prompt, image_path)
             VALUES (?, ?, ?, ?, ?, ?, ?)
-        ''', (user_id, title, desc, ing, procedures, prompt, image_path))
+        ''', (user_id, title, desc, ing, procedures, prompt, image_filename))
         conn.commit()
         conn.close()
-
-        print(f"SAVED: {title} for user {user_id}")
 
         return jsonify({
             "title": title,
@@ -364,12 +425,12 @@ def create_recipe():
             "ingredients": ing,
             "procedures": procedures,
             "image_prompt": prompt,
-            "image_path": image_path
+            "image_path": image_filename
         })
 
     except Exception as e:
-        print(f"Error in create_recipe: {str(e)}")
         return jsonify({"error": str(e)}), 500
+
 
 
 @app.route('/get_recipes', methods=['GET'])
