@@ -363,17 +363,26 @@ def create_recipe():
     time_val = data.get('time', 0)
     serves = data.get('serves', 0)
     meal_type = data.get('meal_type', 'dinner')
-    prompt = data.get('prompt', '')  # prompt for AI image
 
     if not user_id:
         return jsonify({"error": "Missing user_id"}), 400
 
-    # Generate a unique filename for the AI image
-    image_filename = f"images/{uuid.uuid4()}.jpg"
-    os.makedirs(os.path.dirname(image_filename), exist_ok=True)
-
     try:
-        # Call your Cloudflare Worker to generate image
+        # Generate the recipe using your Gemini logic
+        title, desc, ing, procedures, prompt, _ = get_recipe(ingredients, budget, serves, time_val, meal_type)
+
+        if result := [title, desc, ing, procedures, prompt]:
+            if all(x == "0" for x in result):
+                return jsonify({"error": "Could not generate recipe"}), 400
+
+        if not prompt:
+            return jsonify({"error": "Recipe returned no prompt for image"}), 500
+
+        # Generate unique filename for AI image
+        image_filename = f"images/{uuid.uuid4()}.jpg"
+        os.makedirs(os.path.dirname(image_filename), exist_ok=True)
+
+        # Call Cloudflare Worker to generate image
         response = requests.post(
             WORKER_URL,
             headers={
@@ -387,16 +396,8 @@ def create_recipe():
         if response.status_code != 200:
             return jsonify({"error": f"Worker failed: {response.text}"}), response.status_code
 
-        # Save image bytes to disk
         with open(image_filename, "wb") as f:
             f.write(response.content)
-
-        # For the recipe itself, you can still call get_recipe or your existing logic
-        result = get_recipe(ingredients, budget, serves, time_val, meal_type)
-        if result == ["0", "0", "0", "0", "0"]:
-            return jsonify({"error": "Could not generate recipe"}), 400
-
-        title, desc, ing, procedures, _, _ = result
 
         # Make title unique per user
         conn = sqlite3.connect(DB_PATH)
@@ -411,7 +412,7 @@ def create_recipe():
             title = f"{original_title} ({suffix})"
             suffix += 1
 
-        # Save recipe in DB with new image path
+        # Insert recipe with image into DB
         c.execute('''
             INSERT INTO recipes (user_id, title, description, ingredients, procedures, image_prompt, image_path)
             VALUES (?, ?, ?, ?, ?, ?, ?)
@@ -430,6 +431,7 @@ def create_recipe():
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
 
 
 
