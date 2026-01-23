@@ -58,6 +58,16 @@ def ping():
 def example_get():
     return jsonify({"message": "Hello there!", "status": "API working"})
 
+@app.route("/verify_guest", methods=['GET'])
+def verifyguest():
+    username = request.args.get("username", "")
+    password = request.args.get("password", "")
+    users_dict = {"MsLevonius": "Merryhill"}
+    if username in users_dict:
+        if users_dict[username] == password:
+            return jsonify({"status": "1"})
+    return jsonify({"status": "0"})
+
 @app.route('/api/spotify-episodes', methods=['GET'])
 def spotify_episodes():
     show_id = current_app.config.get('SPOTIFY_SHOW_ID', '7C7zL1MoVdOjUgxQyhO6rQ')
