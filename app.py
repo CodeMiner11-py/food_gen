@@ -231,19 +231,19 @@ def get_facts():
 
     return jsonify({"facts": facts_dict})
 
+VISION_WORKER_URL = "https://kidslearninglab.nameless-cherry-998c.workers.dev/"
+
 @app.route('/scan_recipe', methods=['POST'])
 def scan_recipe():
-    user_id = request.form.get('user_id')  # Optional user_id
+    user_id = request.form.get('user_id')
 
     if 'image' not in request.files:
         return jsonify({"error": "No image file provided"}), 400
 
     image_file = request.files['image']
-
     if image_file.filename == '':
         return jsonify({"error": "No selected file"}), 400
 
-    # Save with unique filename to avoid collisions
     filename = secure_filename(image_file.filename)
     unique_filename = f"{uuid.uuid4()}_{filename}"
     save_folder = 'images'
@@ -252,42 +252,47 @@ def scan_recipe():
     image_file.save(image_path)
 
     try:
-        gemini_response = get_ingredients_from_image(image_path)
+        with open(image_path, "rb") as f:
+            worker_response = requests.post(
+                VISION_WORKER_URL,
+                data={"prompt": "This is a food image. Respond ONLY in this exact format with no extra text: title;description;ingredient1,ingredient2,ingredient3;step1,step2,step3. If you cannot identify a recipe, respond with: 0;0;0;0"},
+                files={"image": f},
+                timeout=30
+            )
 
-        if not gemini_response or gemini_response.strip() == "":
+        if worker_response.status_code != 200:
+            return jsonify({"error": "Image scanning worker failed"}), 500
+
+        gemini_response = worker_response.json().get("text", "").strip()
+
+        if not gemini_response:
             return jsonify({"error": "Maximum image scanning quota reached daily! You can create free ingredient-based recipes."}), 500
 
         parts = gemini_response.strip().split(";")
         if len(parts) < 4 or parts[0] == "0":
-            return jsonify({"error": "Gemini could not create a recipe from this image"}), 400
+            return jsonify({"error": "Could not create a recipe from this image"}), 400
 
         title = parts[0].strip()
         description = parts[1].strip()
         ingredients = [i.strip() for i in parts[2].split(",")]
         procedures = [p.strip() for p in parts[3].split(",")]
 
-        # Save recipe in DB if user_id provided
         if user_id:
             conn = sqlite3.connect(DB_PATH)
             c = conn.cursor()
-
-            # Make title unique per user
             original_title = title
             suffix = 1
             while True:
                 c.execute('SELECT COUNT(*) FROM recipes WHERE user_id = ? AND title = ?', (user_id, title))
-                count = c.fetchone()[0]
-                if count == 0:
+                if c.fetchone()[0] == 0:
                     break
                 title = f"{original_title} ({suffix})"
                 suffix += 1
 
-            image_prompt = ""  # You can add prompt logic if available
-
             c.execute('''
                 INSERT INTO recipes (user_id, title, description, ingredients, procedures, image_prompt, image_path)
                 VALUES (?, ?, ?, ?, ?, ?, ?)
-            ''', (user_id, title, description, ",".join(ingredients), ",".join(procedures), image_prompt, image_path))
+            ''', (user_id, title, description, ",".join(ingredients), ",".join(procedures), "", image_path))
             conn.commit()
             conn.close()
 
@@ -300,7 +305,6 @@ def scan_recipe():
 
     except Exception as e:
         return jsonify({"error": f"Internal error: {str(e)}"}), 500
-
 
 def idfetcher():
     new_id = str(uuid.uuid4())  # generate UUID string
