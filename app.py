@@ -62,10 +62,10 @@ def example_get():
 def verifyguest():
     username = request.args.get("username", "")
     password = request.args.get("password", "")
-    users_dict = {"MsLevonius": "Merryhill"}
+    users_dict = {"MsLevonius": ("Merryhill", "1")}
     if username in users_dict:
-        if users_dict[username] == password:
-            return jsonify({"status": "1"})
+        if users_dict[username][0] == password:
+            return jsonify({"status": users_dict[username][0]})
     return jsonify({"status": "0"})
 
 @app.route('/api/spotify-episodes', methods=['GET'])
