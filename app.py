@@ -275,7 +275,7 @@ def scan_recipe():
         title = parts[0].strip()
         description = parts[1].strip()
         ingredients = [i.strip() for i in parts[2].split(",")]
-        procedures = [p.strip() for p in parts[3].split(",")]
+        procedures = [p.strip() for p in parts[3].split("|")]
 
         if user_id:
             conn = sqlite3.connect(DB_PATH)
