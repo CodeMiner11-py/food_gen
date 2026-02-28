@@ -255,7 +255,7 @@ def scan_recipe():
         gemini_response = get_ingredients_from_image(image_path)
 
         if not gemini_response or gemini_response.strip() == "":
-            return jsonify({"error": "Failed to generate recipe from image"}), 500
+            return jsonify({"error": "Maximum image scanning quota reached daily! You can create free ingredient-based recipes."}), 500
 
         parts = gemini_response.strip().split(";")
         if len(parts) < 4 or parts[0] == "0":
@@ -505,9 +505,11 @@ def get_image():
 
             if os.path.exists(image_path):
                 print(f"Sending image from path: {image_path}")
-                response = make_response(send_file(image_path, mimetype='image/png'))
-                response.headers['Access-Control-Allow-Origin'] = "*"
-                return response
+                if os.path.exists(image_path):
+                    mimetype = 'image/jpeg' if image_path.lower().endswith(('.jpg', '.jpeg')) else 'image/png'
+                    response = make_response(send_file(image_path, mimetype=mimetype))
+                    response.headers['Access-Control-Allow-Origin'] = "*"
+                    return response
             else:
                 print(f"File does not exist at: {image_path}")
                 return jsonify({"error": "File missing on disk"}), 404
