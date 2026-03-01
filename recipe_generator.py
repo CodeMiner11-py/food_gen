@@ -16,7 +16,14 @@ def get_response(prompt):
             timeout=30
         )
         response.raise_for_status()
-        return response.text.strip()
+
+        data = response.json()
+
+        if "response" not in data:
+            return ""
+
+        return data["response"].strip()
+
     except Exception:
         return ""
 
