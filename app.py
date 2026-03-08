@@ -54,6 +54,46 @@ def home():
 def ping():
     return jsonify({"message": "Pong!"})
 
+import requests as http
+
+@app.route("/get_daily_med", methods=["GET"])
+def get_daily_med():
+    barcode = request.args.get("barcode", "").strip()
+    if not barcode:
+        return jsonify({"status": "error", "message": "barcode required"}), 400
+
+    # Try common NDC segmentations of the barcode
+    digits = barcode[-11:] if len(barcode) >= 11 else barcode
+    ndc_formats = [
+        f"{digits[:5]}-{digits[5:9]}-{digits[9:]}",   # 5-4-2
+        f"{digits[:5]}-{digits[5:8]}-{digits[8:]}",   # 5-3-2 (11 digit)
+        f"{digits[:4]}-{digits[4:8]}-{digits[8:]}",   # 4-4-2
+        digits                                          # raw
+    ]
+
+    for ndc in ndc_formats:
+        try:
+            r = http.get(
+                "https://dailymed.nlm.nih.gov/dailymed/services/v2/spls.json",
+                params={"ndc": ndc, "pagesize": 1},
+                timeout=5
+            )
+            data = r.json()
+            spls = data.get("data", [])
+            if not spls:
+                continue
+            spl = spls[0]
+            return jsonify({
+                "status": "found",
+                "name": spl.get("title", ""),
+                "set_id": spl.get("setid", ""),
+                "ndc": ndc
+            })
+        except Exception:
+            continue
+
+    return jsonify({"status": "not_found", "message": "No drug found for this barcode"})
+
 @app.route("/example/get", methods=['GET'])
 def example_get():
     return jsonify({"message": "Hello there!", "status": "API working"})
