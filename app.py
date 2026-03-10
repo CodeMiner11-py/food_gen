@@ -61,6 +61,8 @@ def home():
     </html>
     """
 
+import traceback
+
 @app.route("/conjugate", methods=["GET"])
 def conjugate():
     verb  = request.args.get("verb", "").strip().lower()
@@ -70,15 +72,15 @@ def conjugate():
         return jsonify({"error": "verb and tense are required"}), 400
 
     if tense not in TENSE_MAP:
-        return jsonify({"error": f"Unknown tense '{tense}'", "valid": list(TENSE_MAP)}), 400
+        return jsonify({"error": f"Unknown tense '{tense}'"}), 400
 
     try:
-        result     = conjugator.conjugate(verb)
+        result = conjugator.conjugate(verb)
         mood_key, tense_key = TENSE_MAP[tense]
-        conjugated = result[mood_key][tense_key]  # dict of {person: form}
+        conjugated = result[mood_key][tense_key]
         return jsonify({"verb": verb, "tense": tense, "conjugations": conjugated})
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": str(e), "trace": traceback.format_exc()}), 500
 
 @app.route('/ping', methods=['GET'])
 def ping():
