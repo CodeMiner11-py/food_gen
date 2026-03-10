@@ -15,10 +15,9 @@ TENSE_MAP = {
     "preterite":    ("Indicativo", "Pretérito perfecto simple"),
     "imperfect":    ("Indicativo", "Pretérito imperfecto"),
     "future":       ("Indicativo", "Futuro"),
-    "conditional":  ("Condicional", "Condicional"),
+    "conditional":  ("Indicativo", "Condicional"),
     "subjunctive":  ("Subjuntivo", "Presente"),
 }
-
 from flask import Flask, request, jsonify, send_file, make_response
 from flask_cors import CORS
 
