@@ -1,4 +1,5 @@
 from io import BytesIO
+from mlconjug3 import Conjugator
 
 from sqlalchemy import create_engine, text
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -7,6 +8,16 @@ import sqlite3, base64
 
 import requests
 from flask import current_app
+conjugator = Conjugator(language="es")
+
+TENSE_MAP = {
+    "present":      ("Indicativo", "Presente"),
+    "preterite":    ("Indicativo", "Pretérito perfecto simple"),
+    "imperfect":    ("Indicativo", "Pretérito imperfecto"),
+    "future":       ("Indicativo", "Futuro"),
+    "conditional":  ("Condicional", "Condicional"),
+    "subjunctive":  ("Subjuntivo", "Presente"),
+}
 
 from flask import Flask, request, jsonify, send_file, make_response
 from flask_cors import CORS
@@ -49,6 +60,25 @@ def home():
         </body>
     </html>
     """
+
+@app.route("/conjugate", methods=["GET"])
+def conjugate():
+    verb  = request.args.get("verb", "").strip().lower()
+    tense = request.args.get("tense", "").strip().lower()
+
+    if not verb or not tense:
+        return jsonify({"error": "verb and tense are required"}), 400
+
+    if tense not in TENSE_MAP:
+        return jsonify({"error": f"Unknown tense '{tense}'", "valid": list(TENSE_MAP)}), 400
+
+    try:
+        result     = conjugator.conjugate(verb)
+        mood_key, tense_key = TENSE_MAP[tense]
+        conjugated = result[mood_key][tense_key]  # dict of {person: form}
+        return jsonify({"verb": verb, "tense": tense, "conjugations": conjugated})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/ping', methods=['GET'])
 def ping():

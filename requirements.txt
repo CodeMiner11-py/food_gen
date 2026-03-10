@@ -7,3 +7,4 @@ flask-cors==5.0.1
 sqlalchemy
 psycopg2-binary
 werkzeug>=2.2.0
+mlconjug3
