@@ -61,6 +61,13 @@ def home():
     """
 
 import traceback
+import gtts
+
+@app.route("/gtts", methods=["GET"])
+def gtts():
+    text = request.args.get("text", "")
+    return gtts.gTTS(text=text, lang='en').save("output.mp3")
+    return send_file("output.mp3", mimetype='audio/mpeg')
 
 @app.route("/conjugate", methods=["GET"])
 def conjugate():
